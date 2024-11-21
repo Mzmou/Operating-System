@@ -10,7 +10,34 @@
 #include <cstring>
 #include <fstream>
 using namespace std;
-
+int calculate_profit(vector<item> items_in, vector<item> items_out)
+{
+    int profit = 0;
+    for (int i = 0; i < items_out.size(); i++)
+    {
+        for (int j = 0; j < items_in.size(); j++)
+        {
+            if (items_in[i].check_name(items_in[j].get_name()))
+            {
+                if (items_in[j].get_number() >= items_out[i].get_number())
+                {
+                    //   cout << "yes";
+                    profit += (-1) * (items_in[j].get_value() - items_out[i].get_value()) * (items_out[i].get_number());
+                    items_in[j].decrease_number(items_out[i].get_number());
+                    items_out[i].decrease_number(items_out[i].get_number());
+                    break;
+                }
+                else
+                {
+                    profit += (-1) * (items_in[j].get_value() - items_out[i].get_value()) * (items_in[j].get_number());
+                    items_in[j].decrease_number(items_in[j].get_number());
+                    items_out[i].decrease_number(items_in[j].get_number());
+                }
+            }
+        }
+    }
+    return profit;
+}
 void printItems(const vector<item> &items)
 {
     for (const auto &i : items)
@@ -58,8 +85,12 @@ int main(int argc, char *argv[])
     printItems(items_in);
     cout << "hii\n";
     printItems(items_out);
+    auto p = calculate_profit(items_in, items_out);
+    std::string str = std::to_string(p);
+    const char *char_ptr = str.c_str();
+
     const char *message = "helloworld";
-    write(pipeFd, message, strlen(message)); // Write message to the pipe
+    write(pipeFd, char_ptr, strlen(char_ptr)); // Write message to the pipe
 
     // close(pipeFd);
     return 0;

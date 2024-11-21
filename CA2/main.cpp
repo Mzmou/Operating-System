@@ -9,6 +9,7 @@ using namespace std;
 const char *msg = "hello receives\n";
 int main(int argc, char *argv[])
 {
+    int total_profit = 0;
     // Check if the folder name is provided
     if (argc != 3)
     {
@@ -95,6 +96,7 @@ int main(int argc, char *argv[])
             if (bytesRead > 0)
             {
                 buffer[bytesRead] = '\0'; // Null-terminate the string
+                total_profit += stoi(buffer);
                 std::cout << "Parent received message from " << fileName << ": " << buffer << std::endl;
             }
             //  write(pipefd[1], msg, strlen(msg));
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
             waitpid(pid, nullptr, 0);
         }
     }
-
+    cout << "total profit is " << total_profit << '\n';
     closedir(dir);
     return 0;
 }
