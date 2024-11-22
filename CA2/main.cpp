@@ -5,8 +5,43 @@
 #include <unistd.h>   // For fork(), exec()
 #include <fstream>
 #include <cstring>
+#include <sys/stat.h>
+#include <sstream>
+#include <vector>
 using namespace std;
 const char *msg = "hello receives\n";
+const string pipes[] = {"shekar_pipe", "roghan_pipe", "berenj_pipe", "makaroni_pipe"};
+vector<string> extract_items(string line)
+{
+    stringstream ss(line);
+    vector<string> partNames; // To store part names
+
+    string partName;
+    while (getline(ss, partName, ','))
+    {
+        partNames.push_back(partName); // Store each column name
+    }
+}
+void createPipes()
+{
+    // Create named pipes (FIFOs)
+    for (const string &pipeName : pipes)
+    {
+        if (mkfifo(pipeName.c_str(), 0666) == -1)
+        {
+            cerr << "Error creating pipe: " << pipeName << endl;
+        }
+    }
+}
+
+void cleanupPipes()
+{
+    // Remove named pipes after execution
+    for (const string &pipeName : pipes)
+    {
+        unlink(pipeName.c_str());
+    }
+}
 int main(int argc, char *argv[])
 {
     int total_profit = 0;
@@ -42,6 +77,17 @@ int main(int argc, char *argv[])
         // Skip "Parts.csv"
         if (fileName == "Parts.csv")
         {
+            ifstream file("Parts.csv");
+            if (!file.is_open())
+            {
+                cerr << "Error: Could not open Parts.csv" << endl;
+                return 1;
+            }
+
+            // Step 2: Extract part names from the header row (first line of the CSV)
+            string line;
+            getline(file, line); // Read the header row
+
             continue;
         }
         int pipefd[2];
