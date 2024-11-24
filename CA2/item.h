@@ -11,11 +11,12 @@ private:
 
     /* data */
 public:
-    string get_name() { return name; }
+    string get_name() const { return name; }
     void decrease_number(int number_) { number -= number_; }
     bool check_name(string name_) { return (name_ == name); }
     int get_value() { return value; }
     int get_number() { return number; }
+    int get_price() { return value * number; }
     item(string name_, int value_, int number_, bool input_)
     {
         name = name_;
