@@ -81,6 +81,6 @@ int main(int argc, char *argv[])
         auto m = get_massage(item_name, c);
         write(pipeFd, m.c_str(), strlen(m.c_str()));
     }
-
+    // cout << global_item << "exit\n";
     return 0;
 }

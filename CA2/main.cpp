@@ -8,12 +8,23 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <vector>
+#include "item.h"
 using namespace std;
 const char *msg = "hello receives\n";
 string part_name_path = "Parts.csv";
 const string pipes[] = {"shekar_pipe", "roghan_pipe", "berenj_pipe", "makaroni_pipe"};
 #include <iomanip> // for std::hex and std::setw
-
+vector<item> final_merchendise;
+string code_names(vector<string> filename)
+{
+    string coded_string;
+    for (auto f : filename)
+    {
+        coded_string = coded_string + f + "#";
+    }
+    return coded_string;
+    //
+}
 int create_ui(vector<string> items)
 {
     int choice;
@@ -126,7 +137,7 @@ vector<string> get_parts(string folderName, string fileName)
 }
 int create_part(string item_name, string part_path, string cities_name_concatted, int num_of_city)
 {
-    int total_profit;
+    // int total_profit;
     int pipefd[2];
     if (pipe(pipefd) == -1)
     {
@@ -157,6 +168,8 @@ int create_part(string item_name, string part_path, string cities_name_concatted
     }
     else
     {
+        int total_price = 0;
+        int total_leftover = 0;
         for (int i = 0; i < num_of_city; i++)
         {
 
@@ -172,7 +185,10 @@ int create_part(string item_name, string part_path, string cities_name_concatted
                 //   cout << c << '\n';
             }
             auto p = extract_price_remained(string(buffer));
-            std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
+            total_price += p.first;
+            total_leftover += p.second;
+            // std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
+            // cout << "";
             // char buffer2[1024];
             // bytesRead = read(pipefd[0], buffer2, sizeof(buffer2) - 1);
             // if (bytesRead > 0)
@@ -182,6 +198,11 @@ int create_part(string item_name, string part_path, string cities_name_concatted
             //     std::cout << "Parent received message from " << item_name << ": " << buffer << std::endl;
             // }
         }
+        final_merchendise.push_back(item(item_name, total_price, total_leftover));
+
+        //  cout << "88888\n";
+        // cout << total_price << '\n';
+        // cout << total_leftover << '\n';
         close(pipefd[0]);
     }
 }
@@ -229,7 +250,7 @@ int create_warehouse(string fileName, string folderName, string warehousePath, s
             buffer[bytesRead] = '\0';
             total_profit += stoi(buffer);
             cout << "";
-            // std::cout << "Parent received message from " << fileName << ": " << buffer << std::endl;
+            std::cout << "Parent received message from " << fileName << ": " << buffer << std::endl;
             // cout << "total profit is" << total_profit << '\n';
         }
         return total_profit;
@@ -257,6 +278,28 @@ void cleanupPipes(vector<string> pipes, vector<string> cities)
             unlink(pipe_name.c_str());
         }
 }
+int calculate_total_profit(vector<string> fileNames, string folderName, string warehousePath, string items_concatted)
+{
+    int profit = 0;
+    for (auto f : fileNames)
+    {
+        if (f != "Parts.csv")
+        {
+
+            //  cout << f;
+            profit += create_warehouse(f, folderName, warehousePath, items_concatted);
+        }
+    }
+    return profit;
+}
+int handle_leftover_merchendise(vector<string> part_names, string part_path, string cities_name_concatted, int num_cities)
+{
+    for (auto c : part_names)
+    {
+        // cout << c << '\n';
+        create_part(c, part_path, cities_name_concatted, num_cities);
+    }
+}
 int main(int argc, char *argv[])
 {
     vector<string> partNames;
@@ -276,7 +319,7 @@ int main(int argc, char *argv[])
     auto part_names = get_parts(folderName, part_name_path);
     vector<string> cities_name;
     string cities_name_concatted = "";
-    string items_concatted = "";
+    // string items_concatted = "";
     for (auto f : fileNames)
     {
         if (f != "Parts.csv")
@@ -291,30 +334,34 @@ int main(int argc, char *argv[])
         //   //  create_warehouse(f, folderName, warehousePath);
         // }
     }
-    for (auto p : part_names)
-    {
-        items_concatted = items_concatted + p + "#";
-    }
+    auto items_concatted = code_names(part_names);
     //  cout << items_concatted;
     create_named_pipe(part_names, cities_name);
-    int s = 0;
-    for (auto f : fileNames)
-    {
-        if (f != "Parts.csv")
-        {
+    // int total_profit = 0;
+    //  for (auto f : fileNames)
+    //  {
+    //      if (f != "Parts.csv")
+    //      {
 
-            //  cout << f;
-            s += create_warehouse(f, folderName, warehousePath, items_concatted);
-        }
-    }
-
+    //         //  cout << f;
+    //         s += create_warehouse(f, folderName, warehousePath, items_concatted);
+    //     }
+    // }
+    total_profit = calculate_total_profit(fileNames, folderName, warehousePath, items_concatted);
     // cout << part_names.size() << "kjdjjkkj\n";
-    for (auto c : part_names)
-    {
-        // cout << c << '\n';
-        create_part(c, part_path, cities_name_concatted, cities_name.size());
-    }
+    // for (auto c : part_names)
+    // {
+    //     // cout << c << '\n';
+    //     create_part(c, part_path, cities_name_concatted, cities_name.size());
+    // }
+    handle_leftover_merchendise(part_names, part_path, cities_name_concatted, cities_name.size());
     cleanupPipes(part_names, cities_name);
-    create_ui(part_names);
-    cout << "total profit is" << s;
+    int choice = create_ui(part_names);
+    // for (auto f : final_merchendise)
+    // {
+    //     f.print_attribute_end();
+    // }
+    final_merchendise[choice - 1].print_attribute_end();
+    cout << endl;
+    cout << "total profit is" << total_profit << endl;
 }

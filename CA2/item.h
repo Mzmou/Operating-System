@@ -8,6 +8,8 @@ private:
     int value;
     int number;
     bool input;
+    int price;
+    int leftover;
 
     /* data */
 public:
@@ -23,6 +25,18 @@ public:
         value = value_;
         number = number_;
         input = input_;
+    }
+    item(string name_, int price_, int leftover_)
+    {
+        name = name_;
+        price = price_;
+        leftover = leftover_;
+    }
+    void print_attribute_end()
+    {
+        cout << "Item: " << name
+             << ", price: " << price
+             << ", leftover: " << leftover;
     }
     void print_attribute() const
     {

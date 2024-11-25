@@ -15,7 +15,8 @@
 string global_process_name;
 using namespace std;
 #include <iomanip>
-
+vector<item> items_in;
+vector<item> items_out;
 map<string, int> make_inventory(vector<string> item_names, vector<item> items_in)
 {
 
@@ -162,21 +163,25 @@ int calculate_profit(vector<item> &items_in, vector<item> items_out)
         {
             if (items_out[i].check_name(items_in[j].get_name()))
             {
-                // cout << items_in[j].get_name() << "  " << items_out[i].get_number() << '\n';
+                cout << items_in[j].get_name() << "  " << items_out[i].get_number() << '\n';
                 if (items_in[j].get_number() >= items_out[i].get_number())
                 {
 
                     profit += (items_out[i].get_value() - items_in[j].get_value()) * (items_out[i].get_number());
                     items_in[j].decrease_number(items_out[i].get_number());
                     items_out[i].decrease_number(items_out[i].get_number());
-                    break;
+                    // break;
                 }
                 else
                 {
+                    cout << "not enoufh in this input\n";
                     profit += (items_out[i].get_value() - items_in[j].get_value()) * (items_in[j].get_number());
                     items_out[i].decrease_number(items_in[j].get_number());
                     items_in[j].decrease_number(items_in[j].get_number());
                 }
+
+                printItems(items_in);
+                printItems(items_out);
             }
         }
     }
@@ -185,25 +190,10 @@ int calculate_profit(vector<item> &items_in, vector<item> items_out)
     //  printItems(items_out);
     return profit;
 }
-
-int main(int argc, char *argv[])
+void process_input(string filePath)
 {
-    string line;
-    vector<item> items_in;
-    vector<item> items_out;
-
-    string filename = argv[1];
-    string foldername = argv[5];
-    string filePath = foldername + '/' + filename;
-    global_process_name = filePath + " ";
-    int pipeFd = std::stoi(argv[2]);
-    int pipeFd2 = std::stoi(argv[3]);
     std::ifstream file(filePath);
-
-    auto item_concatted = argv[4];
-    const char d = '#';
-    auto items_ = splitString(item_concatted, d);
-
+    string line;
     while (getline(file, line))
     {
 
@@ -228,7 +218,21 @@ int main(int argc, char *argv[])
             items_out.push_back(item(name, value, number, input));
         }
     }
+}
+int main(int argc, char *argv[])
+{
 
+    string filename = argv[1];
+    string foldername = argv[5];
+    string filePath = foldername + '/' + filename;
+    global_process_name = filePath + " ";
+    int pipeFd = std::stoi(argv[2]);
+    int pipeFd2 = std::stoi(argv[3]);
+
+    auto item_concatted = argv[4];
+    const char d = '#';
+    auto items_ = splitString(item_concatted, d);
+    process_input(filePath);
     auto p = calculate_profit(items_in, items_out);
     std::string str = std::to_string(p);
     const char *char_ptr = str.c_str();
@@ -247,6 +251,6 @@ int main(int argc, char *argv[])
 
         // cout << global_process_name << "I blocked\n";
     }
-
+    // cout << global_process_name << "exit\n";
     return 0;
 }
