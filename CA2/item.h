@@ -5,28 +5,27 @@ class item
 {
 private:
     string name;
-    int value;
+    float value;
     int number;
     bool input;
     int price;
     int leftover;
 
-    /* data */
 public:
     string get_name() const { return name; }
     void decrease_number(int number_) { number -= number_; }
     bool check_name(string name_) { return (name_ == name); }
-    int get_value() { return value; }
+    float get_value() { return value; }
     int get_number() { return number; }
-    int get_price() { return value * number; }
-    item(string name_, int value_, int number_, bool input_)
+    float get_price() { return value * float(number); }
+    item(string name_, float value_, int number_, bool input_)
     {
         name = name_;
         value = value_;
         number = number_;
         input = input_;
     }
-    item(string name_, int price_, int leftover_)
+    item(string name_, float price_, int leftover_)
     {
         name = name_;
         price = price_;
@@ -36,7 +35,7 @@ public:
     {
         cout << "Item: " << name
              << ", price: " << price
-             << ", leftover: " << leftover;
+             << ", leftover: " << leftover << '\n';
     }
     void print_attribute() const
     {

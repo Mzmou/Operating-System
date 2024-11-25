@@ -12,11 +12,36 @@
 #include <set>
 #include <fcntl.h>
 #include <map>
+#include "Logger.h"
 string global_process_name;
 using namespace std;
 #include <iomanip>
 vector<item> items_in;
 vector<item> items_out;
+map<string, float> profit_map;
+void initialize_map(vector<string> item_names)
+{
+
+    std::map<std::string, int> inventory;
+
+    for (const auto &key : item_names)
+    {
+        profit_map[key] = 0.0;
+    }
+
+    // for (const auto &[key, value] : inventory)
+    // {
+    //     for (auto i : items_in)
+    //     {
+    //         if (i.check_name(key))
+    //         {
+    //             inventory[key] += i.get_price();
+    //         }
+    //     }
+    //     // std::cout << key << ": " << value << std::endl;
+    // }
+    // return inventory;
+}
 map<string, int> make_inventory(vector<string> item_names, vector<item> items_in)
 {
 
@@ -152,9 +177,9 @@ void createNamedPipeAndWrite(const string &pipeName, const string &message)
         perror("Failed to open named pipe");
     }
 }
-int calculate_profit(vector<item> &items_in, vector<item> items_out)
+float calculate_profit(vector<item> &items_in, vector<item> items_out)
 {
-    int profit = 0;
+    float profit = 0;
     // printItems(items_in);
     // printItems(items_out);
     for (long unsigned int i = 0; i < items_out.size(); i++)
@@ -163,25 +188,26 @@ int calculate_profit(vector<item> &items_in, vector<item> items_out)
         {
             if (items_out[i].check_name(items_in[j].get_name()))
             {
-                cout << items_in[j].get_name() << "  " << items_out[i].get_number() << '\n';
+                //  cout << items_in[j].get_name() << "  " << items_out[i].get_number() << '\n';
                 if (items_in[j].get_number() >= items_out[i].get_number())
                 {
+                    //  cout<<
 
-                    profit += (items_out[i].get_value() - items_in[j].get_value()) * (items_out[i].get_number());
+                    profit_map[items_in[j].get_name()] += ((items_out[i].get_value() - items_in[j].get_value()) * (items_out[i].get_number()));
                     items_in[j].decrease_number(items_out[i].get_number());
                     items_out[i].decrease_number(items_out[i].get_number());
                     // break;
                 }
                 else
                 {
-                    cout << "not enoufh in this input\n";
-                    profit += (items_out[i].get_value() - items_in[j].get_value()) * (items_in[j].get_number());
+                    //  cout << "not enoufh in this input\n";
+                    profit_map[items_in[j].get_name()] += ((items_out[i].get_value() - items_in[j].get_value()) * (items_in[j].get_number()));
                     items_out[i].decrease_number(items_in[j].get_number());
                     items_in[j].decrease_number(items_in[j].get_number());
                 }
 
-                printItems(items_in);
-                printItems(items_out);
+                // printItems(items_in);
+                //  printItems(items_out);
             }
         }
     }
@@ -205,7 +231,7 @@ void process_input(string filePath)
         getline(ss, numberStr, ',');
         getline(ss, inputStr, ',');
 
-        int value = stoi(valueStr);
+        float value = stof(valueStr);
         int number = stoi(numberStr);
         bool input = (inputStr.find("input") != string::npos);
 
@@ -227,21 +253,36 @@ int main(int argc, char *argv[])
     string filePath = foldername + '/' + filename;
     global_process_name = filePath + " ";
     int pipeFd = std::stoi(argv[2]);
-    int pipeFd2 = std::stoi(argv[3]);
-
+    // int pipeFd2 = std::stoi(argv[3]);
+    Logger::log("process started", Logger::LogLevel::INFO, filename);
     auto item_concatted = argv[4];
     const char d = '#';
     auto items_ = splitString(item_concatted, d);
+    initialize_map(items_);
     process_input(filePath);
     auto p = calculate_profit(items_in, items_out);
+    string concatted_profit = "";
+    for (const auto &[key, value] : profit_map)
+    {
+        concatted_profit += to_string(value) + "#";
+        // for (auto i : items_in)
+        // {
+        //     if (i.check_name(key))
+        //     {
+        //         inventory[key] += i.get_price();
+        //     }
+        // }
+        //  std::cout << key << ": " << value << std::endl;
+    }
+    //  cout << concatted_profit << '\n';
     std::string str = std::to_string(p);
-    const char *char_ptr = str.c_str();
-
+    const char *char_ptr = concatted_profit.c_str();
+    // cout << char_ptr << '\n';
     auto price = make_inventory(items_, items_in);
     auto remained = make_inventory_remained(items_, items_in);
-    const char *message = "helloworld";
+    // const char *message = "helloworld";
     write(pipeFd, char_ptr, strlen(char_ptr));
-
+    Logger::log("sent profits", Logger::LogLevel::INFO, filename);
     string city_name;
     for (const auto &name : items_)
     {
@@ -251,6 +292,7 @@ int main(int argc, char *argv[])
 
         // cout << global_process_name << "I blocked\n";
     }
+    Logger::log("process ended", Logger::LogLevel::INFO, filename);
     // cout << global_process_name << "exit\n";
     return 0;
 }

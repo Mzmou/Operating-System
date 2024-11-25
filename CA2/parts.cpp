@@ -12,7 +12,7 @@
 using namespace std;
 string global_item = "djjd";
 #include <iomanip>
-
+#include "Logger.h"
 void printHex(const std::string &str)
 {
     for (unsigned char c : str)
@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
     const char d = '#';
     auto cities = splitString(cities_concatted, d);
 
+    Logger::log("process started", Logger::LogLevel::INFO, item_name);
     global_item = item_name + " ";
     // const char *message = "helloworld";
     cout << "";
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
     {
         auto m = get_massage(item_name, c);
         write(pipeFd, m.c_str(), strlen(m.c_str()));
+        Logger::log("msg sent", Logger::LogLevel::INFO, item_name);
     }
     // cout << global_item << "exit\n";
     return 0;

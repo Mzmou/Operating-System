@@ -8,13 +8,28 @@
 #include <sys/stat.h>
 #include <sstream>
 #include <vector>
+#include <bits/stdc++.h>
 #include "item.h"
+#include "Logger.h"
+
 using namespace std;
 const char *msg = "hello receives\n";
 string part_name_path = "Parts.csv";
+const char *process_name = "main";
 const string pipes[] = {"shekar_pipe", "roghan_pipe", "berenj_pipe", "makaroni_pipe"};
-#include <iomanip> // for std::hex and std::setw
+#include <iomanip>
 vector<item> final_merchendise;
+map<string, float> total_profit_items;
+void initialize_map(vector<string> item_names)
+{
+
+    std::map<std::string, int> inventory;
+
+    for (const auto &key : item_names)
+    {
+        total_profit_items[key] = 0;
+    }
+}
 string code_names(vector<string> filename)
 {
     string coded_string;
@@ -23,18 +38,26 @@ string code_names(vector<string> filename)
         coded_string = coded_string + f + "#";
     }
     return coded_string;
-    //
 }
-int create_ui(vector<string> items)
+vector<string> create_ui(vector<string> items)
 {
-    int choice;
+
     cout << "choose number of the item you want: \n";
-    for (int i = 0; i < items.size(); i++)
+    for (long unsigned int i = 0; i < items.size(); i++)
     {
         cout << (i + 1) << ". " << items[i] << '\n';
     }
-    cin >> choice;
-    return choice;
+    std::string inputLine;
+    std::getline(std::cin, inputLine);
+
+    std::istringstream iss(inputLine);
+    std::vector<std::string> words;
+    std::string word;
+    while (iss >> word)
+    {
+        words.push_back(word);
+    }
+    return words;
 }
 vector<string> splitString(const string &input, char delimiter)
 {
@@ -52,12 +75,12 @@ vector<string> splitString(const string &input, char delimiter)
 
     return result;
 }
-// Function to print the hexadecimal notation of a string
+
 pair<int, int> extract_price_remained(string message)
 {
     const char d = '#';
     auto prices = splitString((message), d);
-    //  cout << message;
+
     std::pair<int, int> p = std::make_pair(stoi(prices[0]), stoi(prices[1]));
     return p;
 }
@@ -85,12 +108,12 @@ vector<string> extract_items(string line)
 }
 void create_named_pipe(vector<string> items_name, vector<string> cities)
 {
-    for (int j = 0; j < cities.size(); j++)
-        //{
-        for (int i = 0; i < items_name.size(); i++)
+    for (long unsigned int j = 0; j < cities.size(); j++)
+
+        for (long unsigned int i = 0; i < items_name.size(); i++)
         {
             string pipe_name = cities[j] + items_name[i];
-            // printHex(pipe_name);
+
             mkfifo(pipe_name.c_str(), 0666);
         }
 }
@@ -131,13 +154,13 @@ vector<string> get_parts(string folderName, string fileName)
 
     string line;
     getline(file, line);
-    //  cout << line;
+
     partNames = extract_items(line);
     return partNames;
 }
 int create_part(string item_name, string part_path, string cities_name_concatted, int num_of_city)
 {
-    // int total_profit;
+
     int pipefd[2];
     if (pipe(pipefd) == -1)
     {
@@ -155,8 +178,6 @@ int create_part(string item_name, string part_path, string cities_name_concatted
 
     if (pid == 0)
     {
-
-        //  std::cout << "Child Process (PID: " << getpid() << ") handling file: " << item_name << std::endl;
 
         char pipeArg1[10];
         snprintf(pipeArg1, sizeof(pipeArg1), "%d", pipefd[1]);
@@ -178,35 +199,18 @@ int create_part(string item_name, string part_path, string cities_name_concatted
             if (bytesRead > 0)
             {
                 buffer[bytesRead] = '\0';
-
-                //  std::cout << "Parent received message from " << item_name << ": " << buffer << std::endl;
-
-                // for (auto c : cities)
-                //   cout << c << '\n';
             }
             auto p = extract_price_remained(string(buffer));
             total_price += p.first;
             total_leftover += p.second;
-            // std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
-            // cout << "";
-            // char buffer2[1024];
-            // bytesRead = read(pipefd[0], buffer2, sizeof(buffer2) - 1);
-            // if (bytesRead > 0)
-            // {
-            //     buffer2[bytesRead] = '\0';
-
-            //     std::cout << "Parent received message from " << item_name << ": " << buffer << std::endl;
-            // }
         }
         final_merchendise.push_back(item(item_name, total_price, total_leftover));
 
-        //  cout << "88888\n";
-        // cout << total_price << '\n';
-        // cout << total_leftover << '\n';
         close(pipefd[0]);
+        return 0;
     }
 }
-int create_warehouse(string fileName, string folderName, string warehousePath, string item_concatted)
+int create_warehouse(string fileName, string folderName, string warehousePath, string item_concatted, vector<string> item_names)
 {
 
     int pipefd[2];
@@ -227,8 +231,6 @@ int create_warehouse(string fileName, string folderName, string warehousePath, s
     if (pid == 0)
     {
 
-        // std::cout << "Child Process (PID: " << getpid() << ") handling file: " << fileName << std::endl;
-
         char pipeArg1[10];
         snprintf(pipeArg1, sizeof(pipeArg1), "%d", pipefd[1]);
         char pipeArg2[10];
@@ -243,15 +245,23 @@ int create_warehouse(string fileName, string folderName, string warehousePath, s
     {
         int total_profit = 0;
 
-        char buffer[1024];
+        char buffer[2048];
         ssize_t bytesRead = read(pipefd[0], buffer, sizeof(buffer) - 1);
+
         if (bytesRead > 0)
         {
+            Logger::log("got message", Logger::LogLevel::INFO, process_name);
             buffer[bytesRead] = '\0';
-            total_profit += stoi(buffer);
+
             cout << "";
-            std::cout << "Parent received message from " << fileName << ": " << buffer << std::endl;
-            // cout << "total profit is" << total_profit << '\n';
+
+            char d = '#';
+            auto res = splitString(string(buffer), d);
+
+            for (long unsigned int k = 0; k < res.size(); k++)
+            {
+                total_profit_items[item_names[k]] += stof(res[k]);
+            }
         }
         return total_profit;
     }
@@ -271,14 +281,14 @@ void createPipes()
 
 void cleanupPipes(vector<string> pipes, vector<string> cities)
 {
-    for (int j = 0; j < cities.size(); j++)
+    for (long unsigned int j = 0; j < cities.size(); j++)
         for (const string &pipeName : pipes)
         {
             string pipe_name = cities[j] + pipeName;
             unlink(pipe_name.c_str());
         }
 }
-int calculate_total_profit(vector<string> fileNames, string folderName, string warehousePath, string items_concatted)
+int calculate_total_profit(vector<string> fileNames, string folderName, string warehousePath, string items_concatted, vector<string> item_names)
 {
     int profit = 0;
     for (auto f : fileNames)
@@ -286,24 +296,24 @@ int calculate_total_profit(vector<string> fileNames, string folderName, string w
         if (f != "Parts.csv")
         {
 
-            //  cout << f;
-            profit += create_warehouse(f, folderName, warehousePath, items_concatted);
+            profit += create_warehouse(f, folderName, warehousePath, items_concatted, item_names);
         }
     }
     return profit;
 }
-int handle_leftover_merchendise(vector<string> part_names, string part_path, string cities_name_concatted, int num_cities)
+void handle_leftover_merchendise(vector<string> part_names, string part_path, string cities_name_concatted, int num_cities)
 {
     for (auto c : part_names)
     {
-        // cout << c << '\n';
+
+        Logger::log("part created", Logger::LogLevel::INFO, process_name);
         create_part(c, part_path, cities_name_concatted, num_cities);
     }
 }
 int main(int argc, char *argv[])
 {
     vector<string> partNames;
-    int total_profit = 0;
+    float total_profit = 0;
 
     if (argc != 4)
     {
@@ -317,9 +327,10 @@ int main(int argc, char *argv[])
     auto fileNames = extract_name_files(folderName);
 
     auto part_names = get_parts(folderName, part_name_path);
+    Logger::log("parts found", Logger::LogLevel::INFO, process_name);
     vector<string> cities_name;
     string cities_name_concatted = "";
-    // string items_concatted = "";
+
     for (auto f : fileNames)
     {
         if (f != "Parts.csv")
@@ -327,41 +338,30 @@ int main(int argc, char *argv[])
             cities_name.push_back(f);
             cities_name_concatted = cities_name_concatted + f + "#";
         }
-        // if (f == "Parts.csv")
-        // {
-
-        //     cout << f;
-        //   //  create_warehouse(f, folderName, warehousePath);
-        // }
     }
     auto items_concatted = code_names(part_names);
-    //  cout << items_concatted;
-    create_named_pipe(part_names, cities_name);
-    // int total_profit = 0;
-    //  for (auto f : fileNames)
-    //  {
-    //      if (f != "Parts.csv")
-    //      {
 
-    //         //  cout << f;
-    //         s += create_warehouse(f, folderName, warehousePath, items_concatted);
-    //     }
-    // }
-    total_profit = calculate_total_profit(fileNames, folderName, warehousePath, items_concatted);
-    // cout << part_names.size() << "kjdjjkkj\n";
-    // for (auto c : part_names)
-    // {
-    //     // cout << c << '\n';
-    //     create_part(c, part_path, cities_name_concatted, cities_name.size());
-    // }
+    create_named_pipe(part_names, cities_name);
+    Logger::log("pipe created", Logger::LogLevel::INFO, process_name);
+
+    auto sortedWords = part_names;
+    std::sort(sortedWords.begin(), sortedWords.end());
+
+    total_profit = calculate_total_profit(fileNames, folderName, warehousePath, items_concatted, sortedWords);
+
     handle_leftover_merchendise(part_names, part_path, cities_name_concatted, cities_name.size());
     cleanupPipes(part_names, cities_name);
-    int choice = create_ui(part_names);
-    // for (auto f : final_merchendise)
-    // {
-    //     f.print_attribute_end();
-    // }
-    final_merchendise[choice - 1].print_attribute_end();
-    cout << endl;
-    cout << "total profit is" << total_profit << endl;
+    auto choice = create_ui(part_names);
+
+    for (auto c : choice)
+    {
+        final_merchendise[stoi(c) - 1].print_attribute_end();
+        total_profit += total_profit_items[part_names[stoi(c) - 1]];
+    }
+
+    cout
+        << "total profit is " << round(total_profit) << endl;
+    Logger::log("process end dear ta", Logger::LogLevel::INFO, process_name);
+
+    wait(NULL);
 }
