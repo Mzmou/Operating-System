@@ -44,7 +44,7 @@ vector <float> apply_notch_all(vector<float> data,float freq_init,float n){
     }
     return result;
 }
-vector<float> apply_filter_with_threads(const vector<float>& input,size_t num_threads,float bandwidth) 
+vector<float> apply_bandpass_filter_with_threads(const vector<float>& input,size_t num_threads,float bandwidth) 
 {
     size_t segment_size = input.size() / num_threads;
     pthread_t threads[num_threads];
