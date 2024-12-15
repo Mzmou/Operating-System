@@ -6,7 +6,6 @@
 #include <math.h>
 #include <pthread.h>
 using namespace std;
-
 struct ThreadData
 {
     const vector<float> *input;
@@ -52,3 +51,4 @@ std::vector<float> apply_iir_filter_with_threads(const std::vector<float>& input
                                                  const std::vector<float>& feedforward_coefficients,
                                                  const std::vector<float>& feedback_coefficients,
                                                  size_t num_threads);
+                                                 

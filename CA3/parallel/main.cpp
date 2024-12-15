@@ -81,10 +81,10 @@ void applyAndMeasureIIR(const std::vector<float> &audioData,SF_INFO fileInfo)
     mt19937 gen(rd());
     uniform_real_distribution<> dis(0.0, 1.0);
 
-    vector<float> feedforward_coefficients(10);
-    vector<float> feedback_coefficients(10);
+    vector<float> feedforward_coefficients(100);
+    vector<float> feedback_coefficients(100);
 
-    for (size_t i = 0; i < 10; ++i)
+    for (size_t i = 0; i < 100; ++i)
     {
         feedforward_coefficients[i] = dis(gen);
         feedback_coefficients[i] = dis(gen);
@@ -98,19 +98,26 @@ void applyAndMeasureIIR(const std::vector<float> &audioData,SF_INFO fileInfo)
     std::cout << "IIR  -> Time taken with threads: " << duration_threaded << " ms" << std::endl;
         writeWavFile(output_filename, iir_threaded, fileInfo);
 }
-int main()
-{
-    std::string inputFile = "input.wav";
-    std::string outputFile = "output_first_filter.wav";
-    const size_t num_threads = 8;
+int main(int argc, char *argv[]) {
+    // Ensure at least one argument is provided
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <input_file> " << std::endl;
+        return 1;
+    }
+
+    std::string inputFile = argv[1]; // Input file from command-line argument
+ // Optional output file
+    const size_t num_threads = 7;
+
     SF_INFO fileInfo;
     std::vector<float> audioData;
  auto start_exec= std::chrono::high_resolution_clock::now();
     std::memset(&fileInfo, 0, sizeof(fileInfo));
   auto start_read = std::chrono::high_resolution_clock::now();
+    //readWavFile_threaded(inputFile, audioData, fileInfo,7);
     readWavFile(inputFile, audioData, fileInfo);
      auto end_read = std::chrono::high_resolution_clock::now();
-    print_vector(audioData);
+    //print_vector(audioData);
 auto duration_read = std::chrono::duration_cast<std::chrono::milliseconds>(end_read- start_read).count();
     std::cout << "read  : " << duration_read << " ms" << std::endl;
     applyAndMeasureBandpass(audioData, num_threads,fileInfo);

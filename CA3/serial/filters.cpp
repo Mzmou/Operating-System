@@ -21,15 +21,15 @@ float find_bandwidth(vector <float> data){
 
     auto min_freq=min_element(data.begin(),data.end());
     auto max_freq=max_element(data.begin(),data.end());
-   //  cout << "Maximum value: " << *max_freq << '\n';
-    //cout << "Minimum value: " << *min_freq << '\n';
+    //  cout << "Maximum value: " << *max_freq << '\n';
+    // cout << "Minimum value: " << *min_freq << '\n';
     return *max_freq-*min_freq;
 
 }
 vector <float> band_pass_filter_all(vector <float> data){
     vector <float> result;
     auto band_width=find_bandwidth(data);
-    for(int i=0;i<data.size();i++){
+    for(size_t i=0;i<data.size();i++){
         result.push_back(band_pass_filter_one(data[i],band_width));
     }
     return result;
@@ -132,7 +132,7 @@ std::vector<float> apply_fir_filter(const std::vector<float>& input, const std::
             }
         }
         output[n] = sum;
-       // cout<<sum<<'\n';
+        //cout<<sum<<'\n';
     }
 
     return output;
@@ -224,15 +224,15 @@ void* process_iir_segment(void* arg) {
     IIRThreadData* data = static_cast<IIRThreadData*>(arg);
     const std::vector<float>& input = *(data->input);
     const std::vector<float>& feedforward_coefficients = *(data->feedforward_coefficients);
-    const std::vector<float>& feedback_coefficients = *(data->feedback_coefficients);
+    //const std::vector<float>& feedback_coefficients = *(data->feedback_coefficients);
     std::vector<float>& result = *(data->result);
 
     size_t feedforward_order = feedforward_coefficients.size();
-    size_t feedback_order = feedback_coefficients.size();
+    //size_t feedback_order = feedback_coefficients.size();
 
     for (size_t n = data->start_index; n < data->end_index; ++n) {
         float sum_feedforward = 0.0f;
-        float sum_feedback = 0.0f;
+        //float sum_feedback = 0.0f;
 
         // Compute feedforward part
         for (size_t k = 0; k < feedforward_order; ++k) {
@@ -278,11 +278,11 @@ std::vector<float> apply_iir_filter_with_threads(const std::vector<float>& input
             throw std::runtime_error("Error creating thread " + std::to_string(i));
         }
     }
-       // cout<<num_threads<<'\n';
+        cout<<num_threads<<'\n';
 
     // Wait for all threads to finish
    for (size_t i = 0; i < num_threads; ++i) {
- //   std::cout << "Joining thread " << i << std::endl;
+    std::cout << "Joining thread " << i << std::endl;
     pthread_join(threads[i], nullptr);
 }
 
